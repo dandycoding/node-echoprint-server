@@ -7,6 +7,7 @@ var fs = require('fs');
 var mysql = require('mysql');
 var temp = require('temp');
 var config = require('../config');
+var log = require('winston');
 
 exports.fpQuery = fpQuery;
 exports.getTrack = getTrack;
@@ -142,22 +143,23 @@ function addTrack(artistID, fp, callback) {
     length = parseInt(length, 10);
   
   // Sanity checks
-  if (!trackID || trackID.length !== 16 ||
-      !artistID || artistID.length !== 16 ||
-      isNaN(length))
-  {
-    return callback('Attempted to add track with missing fields', null);
-  }
+  // if (!trackID || trackID.length !== 16 ||
+  //     !artistID || artistID.length !== 16 ||
+  //     isNaN(length))
+  // {
+  //   return callback('Attempted to add track with missing fields', null);
+  // }
   
   var sql = 'INSERT INTO tracks ' +
-    '(name,artist_id,length,import_date) ' +
-    'VALUES (?,?,?,?)';
-  client.query(sql, [fp.track, artistID, length, new Date()],
+    '(name,artist_id,length,import_date,custom_id) ' +
+    'VALUES (?,?,?,?,?)';
+  log.debug('query: ' + sql);
+  client.query(sql, [fp.track, artistID, length, new Date(), fp.custom_id],
     function(err, info)
   {
     if (err) return callback(err, null);
     if (info.affectedRows !== 1) return callback('Track insert failed', null);
-    
+    log.debug('inserted ID: ' + info.insertId);
     var trackID = info.insertId;
     
     // Write out the codes to a file for bulk insertion into MySQL
@@ -166,9 +168,11 @@ function addTrack(artistID, fp, callback) {
       if (err) return callback(err, null);
       
       // Bulk insert the codes
-      sql = 'LOAD DATA INFILE ? IGNORE INTO TABLE codes';
+      sql = 'LOAD DATA LOCAL INFILE ? IGNORE INTO TABLE codes';
+      log.debug('Bulk insert codes from local file: ' + tempName);
       client.query(sql, [tempName], function(err, info) {
         // Remove the temporary file
+        log.debug('after load data query, err: ' + err);
         fs.unlink(tempName, function(err2) {
           if (!err) err = err2;
           callback(err, trackID);
@@ -179,11 +183,14 @@ function addTrack(artistID, fp, callback) {
 }
 
 function writeCodesToFile(filename, fp, trackID, callback) {
+  log.debug('writeCodesToFile: ' + filename + ' track: ' + trackID);
   var i = 0;
   var keepWriting = function() {
     var success = true;
     while (success && i < fp.codes.length) {
-      success = file.write(fp.codes[i]+'\t'+fp.times[i]+'\t'+trackID+'\n');
+      line = fp.codes[i]+'\t'+fp.times[i]+'\t'+trackID+'\n'
+      //log.debug('writeCodesToFile line ' + i + ' : ' + line);
+      success = file.write(line);
       i++;
     }
     if (i === fp.codes.length)
@@ -200,6 +207,7 @@ function writeCodesToFile(filename, fp, trackID, callback) {
 
 function addArtist(name, callback) {
   var sql = 'INSERT INTO artists (name) VALUES (?)';
+  log.debug('addArtist query: ' + sql + ' params: ' + name);
   client.query(sql, [name], function(err, info) {
     if (err) return callback(err, null);
     callback(null, info.insertId);
