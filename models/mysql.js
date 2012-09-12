@@ -84,9 +84,8 @@ function fpQuery(fp, rows, callback) {
 
 function getTrack(trackID, callback) {
   var sql = 'SELECT tracks.*,artists.name AS artist_name ' +
-    'FROM tracks,artists ' +
-    'WHERE tracks.id=? ' +
-    'AND artists.id=artist_id';
+    'FROM tracks LEFT JOIN artists ON tracks.artist_id = artists.id ' +
+    'WHERE tracks.id=? ';
   client.query(sql, [trackID], function(err, tracks) {
     if (err) return callback(err, null);
     if (tracks.length === 1)
