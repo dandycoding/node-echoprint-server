@@ -320,10 +320,6 @@ function ingest(fp, callback) {
     return callback('Missing or invalid "length" field', null);
   if (!fp.codever)
     return callback('Missing or invalid "version" field', null);
-  if (!fp.track)
-    return callback('Missing or invalid "track" field', null);
-  if (!fp.artist)
-    return callback('Missing or invalid "artist" field', null);
 
   fp = cutFPLength(fp, MAX_DURATION);
   

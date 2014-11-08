@@ -37,7 +37,8 @@ function init() {
       req.body = '';
       req.on('data', function(data) { req.body += data; });
       req.on('end', function() {
-        req.body = qs.parse(req.body);
+        //req.body = qs.parse(req.body);
+        req.body = JSON.parse(req.body);
         
         if (path[1] === 'ingest')
           return api.ingest(req, res);
