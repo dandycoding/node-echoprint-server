@@ -8,6 +8,7 @@ var mysql = require('mysql');
 var temp = require('temp');
 var log = require('winston');
 var config = require('../config');
+var log = require('winston');
 
 exports.fpQuery = fpQuery;
 exports.getTrack = getTrack;
@@ -85,9 +86,8 @@ function fpQuery(fp, rows, callback) {
 
 function getTrack(trackID, callback) {
   var sql = 'SELECT tracks.*,artists.name AS artist_name ' +
-    'FROM tracks,artists ' +
-    'WHERE tracks.id=? ' +
-    'AND artists.id=artist_id';
+    'FROM tracks LEFT JOIN artists ON tracks.artist_id = artists.id ' +
+    'WHERE tracks.id=? ';
   client.query(sql, [trackID], function(err, tracks) {
     if (err) return callback(err, null);
     if (tracks.length === 1)
@@ -144,22 +144,23 @@ function addTrack(artistID, fp, callback) {
     length = parseInt(length, 10);
   
   // Sanity checks
-  if (!artistID)
-    return callback('Attempted to add track with missing artistID', null);
-  if (isNaN(length) || !length)
-    return callback('Attempted to add track with invalid duration "' + length + '"', null);
-  if (!fp.codever)
-    return callback ('Attempted to add track with missing code version (codever field)', null);
+  // if (!trackID || trackID.length !== 16 ||
+  //     !artistID || artistID.length !== 16 ||
+  //     isNaN(length))
+  // {
+  //   return callback('Attempted to add track with missing fields', null);
+  // }
   
   var sql = 'INSERT INTO tracks ' +
-    '(codever,name,artist_id,length,import_date) ' +
-    'VALUES (?,?,?,?,NOW())';
-  client.query(sql, [fp.codever, fp.track, artistID, length],
+    '(name,artist_id,length,import_date,custom_id) ' +
+    'VALUES (?,?,?,?,?)';
+  log.debug('query: ' + sql);
+  client.query(sql, [fp.track, artistID, length, new Date(), fp.custom_id],
     function(err, info)
   {
     if (err) return callback(err, null);
     if (info.affectedRows !== 1) return callback('Track insert failed', null);
-    
+    log.debug('inserted ID: ' + info.insertId);
     var trackID = info.insertId;
     var tempName = temp.path({ prefix: 'echoprint-' + trackID, suffix: '.csv' });
     
@@ -169,11 +170,11 @@ function addTrack(artistID, fp, callback) {
       if (err) return callback(err, null);
       
       // Bulk insert the codes
-      log.debug('Bulk inserting ' + fp.codes.length + ' codes for track ' + trackID);
       sql = 'LOAD DATA LOCAL INFILE ? IGNORE INTO TABLE codes';
+      log.debug('Bulk insert codes from local file: ' + tempName);
       client.query(sql, [tempName], function(err, info) {
         // Remove the temporary file
-        log.debug('Removing temporary file ' + tempName);
+        log.debug('after load data query, err: ' + err);
         fs.unlink(tempName, function(err2) {
           if (!err) err = err2;
           callback(err, trackID);
@@ -184,11 +185,14 @@ function addTrack(artistID, fp, callback) {
 }
 
 function writeCodesToFile(filename, fp, trackID, callback) {
+  log.debug('writeCodesToFile: ' + filename + ' track: ' + trackID);
   var i = 0;
   var keepWriting = function() {
     var success = true;
     while (success && i < fp.codes.length) {
-      success = file.write(fp.codes[i]+'\t'+fp.times[i]+'\t'+trackID+'\n');
+      line = fp.codes[i]+'\t'+fp.times[i]+'\t'+trackID+'\n'
+      //log.debug('writeCodesToFile line ' + i + ' : ' + line);
+      success = file.write(line);
       i++;
     }
     if (i === fp.codes.length)
@@ -205,6 +209,7 @@ function writeCodesToFile(filename, fp, trackID, callback) {
 
 function addArtist(name, callback) {
   var sql = 'INSERT INTO artists (name) VALUES (?)';
+  log.debug('addArtist query: ' + sql + ' params: ' + name);
   client.query(sql, [name], function(err, info) {
     if (err) return callback(err, null);
     callback(null, info.insertId);

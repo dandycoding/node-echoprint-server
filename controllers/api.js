@@ -50,6 +50,7 @@ exports.ingest = function(req, res) {
   var length = req.body.length;
   var track = req.body.track;
   var artist = req.body.artist;
+  var custom_id = req.body.custom_id;
   
   if (!code)
     return server.respond(req, res, 500, { error: 'Missing "code" field' });
@@ -72,8 +73,9 @@ exports.ingest = function(req, res) {
     
     fp.codever = codeVer;
     fp.track = track;
-    fp.length = length;
+    fp.length = parseInt(length, 10);
     fp.artist = artist;
+    fp.custom_id = custom_id;
     
     fingerprinter.ingest(fp, function(err, result) {
       if (err) {
