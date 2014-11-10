@@ -359,17 +359,7 @@ function ingest(fp, callback) {
                   finished(match);
                 });
               } else {
-                log.debug('Setting artist ' + artist.artist_id + ' name to "' +
-                  artist.name + '"');
-                
-                // Update the artist name
-                database.updateArtist(match.artist_id, fp.artist,
-                  function(err)
-                {
-                  if (err) { gMutex.release(); return callback(err, null); }
-                  match.artist = fp.artist;
-                  finished(match);
-                });
+                finished(match);
               }
             });
           } else {
@@ -388,7 +378,7 @@ function ingest(fp, callback) {
           log.info('Track update complete');
           gMutex.release();
           callback(null, { track_id: match.track_id, track: match.track,
-            artist_id: match.artist_id, artist: match.artist });
+            artist_id: match.artist_id, artist: match.artist, custom_id: match.custom_id });
         };
         
         if (!match.track && fp.track) {

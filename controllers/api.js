@@ -36,7 +36,7 @@ exports.query = function(req, res) {
         !!result.success + ', status=' + result.status);
       
       return server.respond(req, res, 200, { success: !!result.success,
-        status: result.status, match: result.match || null });
+        status: result.status, match: result.match || null, custom_id: result.custom_id });
     });
   });
 };
