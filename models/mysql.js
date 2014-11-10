@@ -183,7 +183,6 @@ function writeCodesToFile(filename, fp, trackID, callback) {
     var success = true;
     while (success && i < fp.codes.length) {
       line = fp.codes[i]+'\t'+fp.times[i]+'\t'+trackID+'\n'
-      //log.debug('writeCodesToFile line ' + i + ' : ' + line);
       success = file.write(line);
       i++;
     }
