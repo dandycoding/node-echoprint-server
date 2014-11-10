@@ -16,6 +16,7 @@ exports.renderView = renderView;
 exports.respond = respond;
 
 var TIMEOUT = 1000 * 60;
+var POST_SIZE_LIMIT = 10 * 1024 * 1024; // 10 megabytes
 
 /**
  * Initialize the HTTP endpoints.
@@ -27,6 +28,7 @@ function init() {
     
     var url = urlParser.parse(req.url, true);
     var path = url.pathname.split('/', 16);
+    var size = 0;
     
     if (req.method === 'GET') {
       if (path[1] === 'query')
@@ -35,9 +37,19 @@ function init() {
         return debug.debugQuery(req, res);
     } else if (req.method === 'POST') {
       req.body = '';
-      req.on('data', function(data) { req.body += data; });
+      req.on('data', function(data) { 
+        size += data.length;
+        req.body += data; 
+
+        // Limit POST size
+        if (size > POST_SIZE_LIMIT) {
+          res.abort();
+          respond(req, res, 422, { error: 'POST size cannot 10MB' });
+        }
+      });
+
       req.on('end', function() {
-        req.body = qs.parse(req.body);
+        req.body = JSON.parse(req.body);
         
         if (path[1] === 'ingest')
           return api.ingest(req, res);

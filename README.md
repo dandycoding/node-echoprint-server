@@ -45,6 +45,7 @@ Optional fields:
 
 * `track` - Name of the track
 * `artist` - Track artist
+* `custom_id` - custom ID for this track, any string for use by clients (255 chars)
 
 The response is a JSON object containing `track_id`, `track`, `artist_id`, 
 `artist` on success or `error` string on failure.
