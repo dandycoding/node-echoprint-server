@@ -10,7 +10,6 @@ development/debugging.
 ## Dependencies ##
 
 * [node.js](http://nodejs.org/) - Tested with 0.6.10
-* [MySQL](http://mysql.com/) - Tested with 5.5.20
 
 To generate audio fingerprints you will need the 
 [echoprint-codegen](https://github.com/echonest/echoprint-codegen) client.

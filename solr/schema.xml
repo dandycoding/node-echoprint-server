@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<schema name="audioaddict-echoprint" version="1.0">
+
+  <types>
+    <!-- A string field for the track IDs -->
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" omitNorms="true" positionIncrementGap="0"/>
+    <fieldType name="date" class="solr.DateField"/>
+    <fieldType name="text" class="solr.TextField"/>
+    <fieldType name="trielong" class="solr.TrieLongField" precisionStep="0"/>
+  </types>
+
+  <fields>
+    <!-- Solr internal unique ID. These do not correspond to AudioAddict tracks.id values -->
+    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+
+    <!-- AudioAddict platform track ID -->
+    <field name="track_id" type="int" indexed="true" stored="true" required="true" multiValued="false"/>
+
+    <!-- The fingerprint associated with a track (a hashed, compressed version of of the code / time pairs) -->
+    <field name="fp" type="string" indexed="true" stored="true" required="true"/>
+
+    <!-- The expanded codes for a track, and the corresponding time values. -->
+    <!-- We can split these pairs up because multivalued fields are order-safe in lucene -->
+    <field name="codes" type="int" indexed="true" stored="true" required="true" multiValued="true"/>
+    <field name="times" type="int" indexed="true" stored="true" required="true" multiValued="true"/>
+
+    <field name="artist" type="string" indexed="true" stored="true" required="false" multiValued="false"/>
+    <field name="release" type="string" indexed="true" stored="true" required="false" multiValued="false"/>
+    <field name="track" type="string" indexed="true" stored="true" required="false" multiValued="false"/>
+    <field name="length" type="int" indexed="true" stored="true" required="true" multiValued="false"/>
+    <field name="codever" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+    <field name="source" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+    <field name="import_date" type="date" indexed="true" stored="true" required="true" multiValued="false"/>
+    
+    <!-- Solr internal use field for locking, etc -->
+    <field name="_version_" type="trielong" indexed="true" stored="true" multiValued="false"/>
+
+  </fields>
+
+  <!-- Field to use to determine and enforce document uniqueness. 
+       Unless this field is marked with required="false", it will be a required field
+  -->
+  <uniqueKey>track_id</uniqueKey>
+
+  <!-- field for the QueryParser to use when an explicit fieldname is absent -->
+  <defaultSearchField>codes</defaultSearchField>
+
+  <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
+  <solrQueryParser defaultOperator="OR"/>
+
+</schema>

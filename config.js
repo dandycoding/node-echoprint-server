@@ -9,10 +9,8 @@ var settings = {
   web_port: 37760,
   
   // Database settings
-  db_user: 'root',
-  db_pass: '',
-  db_database: 'echoprint',
-  db_host: 'localhost',
+  solr_hostname: 'localhost',
+  solr_port: 8983,
   
   // Set this to a system username to drop root privileges
   run_as_user: '',
@@ -39,11 +37,11 @@ try {
       settings[property] = localSettings[property];
   }
   
-  log.info('Loaded settings from config.local.js. Database is ' +
-    settings.db_database + '@' + settings.db_host);
+  log.info('Loaded settings from config.local.js. Database is Solr on ' +
+    settings.solr_hostname + ':' + settings.solr_port);
 } catch (err) {
-  log.warn('Using default settings from config.js. Database is ' +
-    settings.db_database + '@' + settings.db_host);
+  log.warn('Using default settings from config.js. Database is Solr on ' +
+    settings.solr_hostname + ':' + settings.solr_port);
 }
 
 module.exports = settings;

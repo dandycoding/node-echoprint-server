@@ -2,7 +2,7 @@ var zlib = require('zlib');
 var log = require('winston');
 var Mutex = require('../mutex');
 var config = require('../config');
-var database = require('../models/mysql');
+var database = require('../models/solr');
 
 // Constants
 var CHARACTERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -41,6 +41,7 @@ function decodeCodeString(codeStr, callback) {
     if (err) return callback(err, null);
     // Convert the ascii hex codes into codes and time offsets
     var fp = inflateCodeString(uncompressed);
+    fp.codeStr = codeStr;
     log.debug('Inflated ' + codeStr.length + ' byte code string into ' +
       fp.codes.length + ' codes');
     
@@ -204,6 +205,8 @@ function bestMatchForQuery(fp, threshold, callback) {
 
 /**
  * Attach track metadata to a query match.
+ * This is not used for Solr queries, we just pass back the same match object
+ * which already includes the metadata we need.
  */
 function getTrackMetadata(match, allMatches, status, callback) {
   database.getTrack(match.track_id, function(err, track) {
@@ -218,8 +221,7 @@ function getTrackMetadata(match, allMatches, status, callback) {
     match.import_date = track.import_date;
     match.custom_id = track.custom_id;
     
-    callback(null, { success: true, status: status, match: match },
-      allMatches);
+    callback(null, { success: true, status: status, match: match }, allMatches);
   });
 }
 
@@ -320,11 +322,14 @@ function ingest(fp, callback) {
     return callback('Missing or invalid "length" field', null);
   if (!fp.codever)
     return callback('Missing or invalid "version" field', null);
+  if (!fp.custom_id)
+    return callback('Missing or invalid "custom_id" field', null);
 
   fp = cutFPLength(fp, MAX_DURATION);
   
   // Acquire a lock while modifying the database
   gMutex.lock(function() {
+
     // Check if this track already exists in the database
     bestMatchForQuery(fp, config.code_threshold, function(err, res) {
       if (err) {
