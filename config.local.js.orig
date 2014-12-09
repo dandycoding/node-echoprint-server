@@ -7,8 +7,6 @@ module.exports = {
   web_port: 37760,
   
   // Database settings
-  tycoon_hostname: 'localhost',
-  tycoon_port: 1978,
   solr_hostname: 'localhost',
   solr_port: 8983,
   
