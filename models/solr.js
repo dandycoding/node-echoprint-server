@@ -98,7 +98,7 @@ function getTrackByName(track, artistID, callback) {
 
   solrClient.search(query, function(err, results){
     if (err) return callback(err, null);
-    if (!results || !results.response.numFound >= 1) return callback(null, []);
+    if (!results || !(results.response.numFound >= 1)) return callback(null, []);
 
     matches = results.response.docs
     callback(null, matches);
