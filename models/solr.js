@@ -18,6 +18,7 @@ exports.updateArtist = updateArtist;
 exports.disconnect = disconnect;
 
 var solrClient = solr.createClient(config.solr_hostname, config.solr_port, 'echoprint');
+solrClient.basicAuth(config.solr_username, config.solr_password);
 
 function fpQuery(fp, rows, callback) {
   var fpCodesStr = fp.codes.join(' ');
