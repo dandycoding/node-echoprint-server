@@ -33,6 +33,7 @@ exports.debugQuery = function(req, res) {
     req.body.track = json.metadata.title;
     req.body.length = json.metadata.duration;
     req.body.artist = json.metadata.artist;
+    req.body.custom_id = json.custom_id;
     return require('./api').ingest(req, res);
   }
 

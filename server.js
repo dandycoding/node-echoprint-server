@@ -48,14 +48,18 @@ function init() {
         }
       });
 
-      req.on('end', function() {
-        req.body = JSON.parse(req.body);
-        
+      req.on('end', function() {        
         if (path[1] === 'ingest')
+        {
+          req.body = JSON.parse(req.body);
           return api.ingest(req, res);
+        }
         else if (path[1] === 'debug')
+        {
+          req.body = qs.parse(req.body);
           return debug.debugQuery(req, res);
-        
+        }
+          
         respond(req, res, 404, { error: 'Invalid API endpoint' });
       });
       return;

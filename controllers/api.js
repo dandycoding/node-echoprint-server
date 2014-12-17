@@ -46,7 +46,7 @@ exports.query = function(req, res) {
  */
 exports.ingest = function(req, res) {
   var code = req.body.code;
-  var codeVer = req.body.metadata.version;
+  var codeVer = req.body.version || req.body.metadata.version;
   var length = req.body.length || req.body.metadata.duration;
   var track = req.body.track;
   var artist = req.body.artist;
