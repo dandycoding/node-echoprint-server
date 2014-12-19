@@ -11,7 +11,8 @@ module.exports = {
   solr_port: 8983,
   solr_username: '',
   solr_password: '',
-  solr_corename: ''
+  solr_corename: '',
+  solr_max_boolean_terms: 1024,
   
   // Set this to a system username to drop root privileges
   run_as_user: '',
