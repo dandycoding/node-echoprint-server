@@ -21,7 +21,7 @@ var solrClient = solr.createClient(config.solr_hostname, config.solr_port, confi
 solrClient.basicAuth(config.solr_username, config.solr_password);
 
 function fpQuery(fp, rows, callback) {
-  var fpCodesStr = fp.codes.join(' ').slice(0, (config.solr_max_boolean_terms - 1));
+  var fpCodesStr = fp.codes.slice(0, (config.solr_max_boolean_terms - 1)).join(' ');
 
   // Get the top N matching tracks sorted by score (number of matched codes)
   var query = solrClient.createQuery().q({codes: fpCodesStr }).fl('*,score').start(0).rows(rows);
