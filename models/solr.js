@@ -69,7 +69,6 @@ function addTrack(artist, fp, callback) {
     import_date: new Date(),
     length: length,
     source: 'echoprint-codegen',
-    fp: fp.codeStr,
     codes: fp.codes,
     times: fp.times,
     codever: fp.codever
