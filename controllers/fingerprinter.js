@@ -33,10 +33,10 @@ var gMutex = Mutex.getMutex();
 function decodeCodeString(codeStr, callback) {
   // Fix url-safe characters
   codeStr = codeStr.replace(/-/g, '+').replace(/_/g, '/');
-  
+
   // Expand the base64 data into a binary buffer
   var compressed = new Buffer(codeStr, 'base64');
-  
+
   // Decompress the binary buffer into ascii hex codes
   zlib.inflate(compressed, function(err, uncompressed) {
     if (err) return callback(err, null);
@@ -45,7 +45,7 @@ function decodeCodeString(codeStr, callback) {
     fp.codeStr = codeStr;
     log.debug('Inflated ' + codeStr.length + ' byte code string into ' +
       fp.codes.length + ' codes');
-    
+
     callback(null, fp);
   });
 }
@@ -59,17 +59,17 @@ function inflateCodeString(buf) {
   var count = Math.floor(buf.length / 5);
   var endTimestamps = count / 2;
   var i;
-  
+
   var codes = new Array(count / 2);
   var times = new Array(count / 2);
-  
+
   for (i = 0; i < endTimestamps; i++) {
     times[i] = parseInt(buf.toString('ascii', i * 5, i * 5 + 5), 16);
   }
   for (i = endTimestamps; i < count; i++) {
     codes[i - endTimestamps] = parseInt(buf.toString('ascii', i * 5, i * 5 + 5), 16);
   }
-  
+
   // Sanity check
   for (i = 0; i < codes.length; i++) {
     if (isNaN(codes[i]) || isNaN(times[i])) {
@@ -77,7 +77,7 @@ function inflateCodeString(buf) {
       return { codes: [], times: [] };
     }
   }
-  
+
   return { codes: codes, times: times };
 }
 
@@ -86,26 +86,26 @@ function inflateCodeString(buf) {
  */
 function cutFPLength(fp, maxSeconds) {
   if (!maxSeconds) maxSeconds = 60;
-  
+
   var newFP = {};
   for(var key in fp) {
     if (fp.hasOwnProperty(key))
      newFP[key] = fp[key];
    }
-  
+
   var firstTimestamp = fp.times[0];
   var sixtySeconds = maxSeconds * SECONDS_TO_TIMESTAMP + firstTimestamp;
-  
+
   for (var i = 0; i < fp.times.length; i++) {
     if (fp.times[i] > sixtySeconds) {
       log.debug('Clamping ' + fp.codes.length + ' codes to ' + i + ' codes');
-      
+
       newFP.codes = fp.codes.slice(0, i);
       newFP.times = fp.times.slice(0, i);
       return newFP;
     }
   }
-  
+
   newFP.codes = fp.codes.slice(0);
   newFP.times = fp.times.slice(0);
   return newFP;
@@ -116,28 +116,28 @@ function cutFPLength(fp, maxSeconds) {
  */
 function bestMatchForQuery(fp, threshold, callback) {
   fp = cutFPLength(fp);
-  
+
   if (!fp.codes.length)
     return callback('No valid fingerprint codes specified', null);
-  
+
   log.debug('Starting query with ' + fp.codes.length + ' codes');
-  
+
   database.fpQuery(fp, MAX_ROWS, function(err, matches) {
     if (err) return callback(err, null);
-    
+
     if (!matches || !matches.length) {
       log.debug('No matched tracks');
       return callback(null, { status: 'NO_RESULTS' });
     }
-    
+
     log.debug('Matched ' + matches.length + ' tracks, top code overlap is ' +
       matches[0].score);
-    
+
     // If the best result matched fewer codes than our percentage threshold,
     // report no results
     if (matches[0].score < fp.codes.length * MIN_MATCH_PERCENT)
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    
+
     // Compute more accurate scores for each track by taking time offsets into
     // account
     var newMatches = [];
@@ -148,15 +148,15 @@ function bestMatchForQuery(fp, threshold, callback) {
         newMatches.push(match);
     }
     matches = newMatches;
-    
+
     if (!matches.length) {
       log.debug('No matched tracks after score adjustment');
       return callback(null, { status: 'NO_RESULTS_HISTOGRAM_DECREASED' });
     }
-    
+
     // Sort the matches based on actual score
     matches.sort(function(a, b) { return b.ascore - a.ascore; });
-    
+
     // If we only had one track match, just use the threshold to determine if
     // the match is good enough
     if (matches.length === 1) {
@@ -172,32 +172,32 @@ function bestMatchForQuery(fp, threshold, callback) {
         return callback(null, { status: 'SINGLE_BAD_MATCH' });
       }
     }
-    
+
     var origTopScore = matches[0].ascore;
-    
+
     // Sort by the new adjusted score
     matches.sort(function(a, b) { return b.ascore - a.score; });
-    
+
     var topMatch = matches[0];
     var newTopScore = topMatch.ascore;
-    
+
     log.debug('Actual top score is ' + newTopScore + ', next score is ' +
       matches[1].ascore);
-    
+
     // If the best result actually matched fewer codes than our percentage
     // threshold, report no results
     if (newTopScore < fp.codes.length * MIN_MATCH_PERCENT)
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    
+
     // If the actual score was not close enough, then no match
     if (newTopScore <= origTopScore / 2)
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    
+
     // If the difference in actual scores between the first and second matches
-    // is not significant enough, then no match 
+    // is not significant enough, then no match
     if (newTopScore - matches[1].ascore < newTopScore / 2)
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    
+
     // Fetch metadata for the top track
     getTrackMetadata(topMatch, matches,
       'MULTIPLE_GOOD_MATCH_HISTOGRAM_DECREASED', callback);
@@ -214,35 +214,37 @@ function getTrackMetadata(match, allMatches, status, callback) {
     if (err) return callback(err, null);
     if (!track)
       return callback('Track ' + match.track_id + ' went missing', null);
-    
-    match.track = track.name;
-    match.artist = track.artist_name;
+
+    track = track[0]
+
+    match.track = track.track;
+    match.artist = track.artist;
     match.artist_id = track.artist_id;
     match.length = track.length;
     match.import_date = track.import_date;
     match.custom_id = track.custom_id;
-    
+
     callback(null, { success: true, status: status, match: match }, allMatches);
   });
 }
 
 /**
  * Build a mapping from each code in the given fingerprint to an array of time
- * offsets where that code appears, with the slop factor accounted for in the 
+ * offsets where that code appears, with the slop factor accounted for in the
  * time offsets. Used to speed up getActualScore() calculation.
  */
 function getCodesToTimes(match, slop) {
   var codesToTimes = {};
-  
+
   for (var i = 0; i < match.codes.length; i++) {
     var code = match.codes[i];
     var time = Math.floor(match.times[i] / slop) * slop;
-    
+
     if (codesToTimes[code] === undefined)
       codesToTimes[code] = [];
     codesToTimes[code].push(time);
   }
-  
+
   return codesToTimes;
 }
 
@@ -252,15 +254,15 @@ function getCodesToTimes(match, slop) {
  */
 function getActualScore(fp, match, threshold, slop) {
   var MAX_DIST = 32767;
-  
+
   if (match.codes.length < threshold)
     return 0;
-  
+
   var timeDiffs = {};
   var i, j;
-  
+
   var matchCodesToTimes = getCodesToTimes(match, slop);
-  
+
   // Iterate over each {code,time} tuple in the query
   for (i = 0; i < fp.codes.length; i++) {
     var code = fp.codes[i];
@@ -281,7 +283,7 @@ function getActualScore(fp, match, threshold, slop) {
   }
 
   match.histogram = timeDiffs;
-  
+
   // Convert the histogram into an array, sort it, and sum the top two
   // frequencies to compute the adjusted score
   var keys = Object.keys(timeDiffs);
@@ -289,7 +291,7 @@ function getActualScore(fp, match, threshold, slop) {
   for (i = 0; i < keys.length; i++)
     array[i] = [ keys[i], timeDiffs[keys[i]] ];
   array.sort(function(a, b) { return b[1] - a[1]; });
-  
+
   if (array.length > 1)
     return array[0][1] + array[1][1];
   else if (array.length === 1)
@@ -304,19 +306,19 @@ function getActualScore(fp, match, threshold, slop) {
  */
 function ingest(fp, callback) {
   var MAX_DURATION = 60 * 60 * 4;
-  
+
   fp.codever = fp.codever || fp.version;
 
   log.info('Ingesting track "' + fp.track + '" by artist "' + fp.artist +
     '", ' + fp.length + ' seconds, ' + fp.codes.length + ' codes');
-  
+
   if (!fp.codes.length)
     return callback('Missing required track fields: no codes', null);
   if (typeof fp.length !== 'number')
     return callback('Missing required track fields: length not a number: ' + typeof(fp.length), null);
   if (!fp.codever)
     return callback('Missing required track fields: no code version', null);
-  
+
   if (!fp.codes.length)
     return callback('Missing "codes" array', null);
   if (typeof fp.length !== 'number')
@@ -327,7 +329,7 @@ function ingest(fp, callback) {
     return callback('Missing or invalid "custom_id" field', null);
 
   fp = cutFPLength(fp, MAX_DURATION);
-  
+
   // Acquire a lock while modifying the database
   gMutex.lock(function() {
 
@@ -337,13 +339,13 @@ function ingest(fp, callback) {
         gMutex.release();
         return callback('Query failed: ' + err, null);
       }
-      
+
       if (res.success) {
         var match = res.match;
         log.info('Found existing match with status ' + res.status +
           ', track ' + match.track_id + ' ("' + match.track + '") by "' +
           match.artist + '"');
-        
+
         var checkUpdateArtist = function() {
           if (!match.artist) {
             // Existing artist is unnamed but we have a name now. Check if this
@@ -351,10 +353,10 @@ function ingest(fp, callback) {
             log.debug('Updating track artist');
             database.getArtistByName(fp.artist, function(err, artist) {
               if (err) { gMutex.release(); return callback(err, null); }
-              
+
               if (artist) {
                 log.debug('Setting track artist_id to ' + artist.artist_id);
-                
+
                 // Update the track to point to the existing artist
                 database.updateTrack(match.track_id, match.track,
                   artist.artist_id, function(err)
@@ -378,7 +380,7 @@ function ingest(fp, callback) {
             finished(match);
           }
         };
-        
+
         var finished = function(match) {
           // Success
           log.info('Track update complete');
@@ -386,7 +388,7 @@ function ingest(fp, callback) {
           callback(null, { track_id: match.track_id, track: match.track,
             artist_id: match.artist_id, artist: match.artist, custom_id: match.custom_id });
         };
-        
+
         if (!match.track && fp.track) {
           // Existing track is unnamed but we have a name now. Update the track
           log.debug('Updating track name to "' + fp.track + '"');
@@ -405,13 +407,13 @@ function ingest(fp, callback) {
         // Track does not exist in the database yet
         log.debug('Track does not exist in the database yet, status ' +
           res.status);
-        
+
         // Check if we were given an artist name
         if (fp.artist) {
           // Does this artist already exist in the database?
           database.getArtistByName(fp.artist, function(err, artist) {
             if (err) { gMutex.release(); return callback(err, null); }
-            
+
             if (!artist)
               createArtistAndTrack();
             else
@@ -421,25 +423,25 @@ function ingest(fp, callback) {
           createTrack(null,null);
         }
       }
-      
+
       // Function for creating a new artist and new track
       function createArtistAndTrack() {
         log.debug('Adding artist "' + fp.artist + '"');
         database.addArtist(fp.artist, function(err, artistID) {
           if (err) { gMutex.release(); return callback(err, null); }
-          
+
           // Success
           log.info('Created artist ' + artistID + ' ("' + fp.artist + '")');
           createTrack(artistID, fp.artist);
         });
       }
-      
+
       // Function for creating a new track given an artistID
       function createTrack(artistID, artist) {
         log.debug('Adding track "' + fp.track + '" for artist "' + artist  + '" (' + artistID + ')');
         database.addTrack(artistID, fp, function(err, trackID) {
           if (err) { gMutex.release(); return callback(err, null); }
-          
+
           // Success
           log.info('Created track ' + trackID + ' ("' + fp.track + '")');
           gMutex.release();

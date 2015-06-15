@@ -66,7 +66,7 @@ function addTrack(artist, fp, callback) {
   track = {
     track: fp.track,
     track_id: fp.custom_id,
-    artist: artist, 
+    artist: artist,
     import_date: new Date(),
     length: length,
     source: 'echoprint-codegen',
