@@ -39,3 +39,8 @@
 {"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":29547,"time":"2015-06-15T09:17:16.414Z","msg":"Module not enabled in configuration; not starting."}
 {"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":29556,"time":"2015-06-15T09:18:26.742Z","msg":"Module not enabled in configuration; not starting."}
 {"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":29776,"time":"2015-06-15T10:01:02.626Z","msg":"Module not enabled in configuration; not starting."}
+{"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":32158,"time":"2015-06-15T14:12:24.479Z","msg":"Module not enabled in configuration; not starting."}
+{"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":32181,"time":"2015-06-15T14:16:59.168Z","msg":"Module not enabled in configuration; not starting."}
+{"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":32202,"time":"2015-06-15T14:17:52.049Z","msg":"Module not enabled in configuration; not starting."}
+{"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":32210,"time":"2015-06-15T14:18:37.233Z","msg":"Module not enabled in configuration; not starting."}
+{"v":0,"level":30,"name":"newrelic","hostname":"mbp-2.local","pid":32221,"time":"2015-06-15T14:19:21.296Z","msg":"Module not enabled in configuration; not starting."}
