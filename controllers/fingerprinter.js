@@ -133,13 +133,12 @@ function bestMatchForQuery(fp, threshold, callback) {
     log.debug('Matched ' + matches.length + ' tracks, top code overlap is ' +
       matches[0].score);
 
-    log.debug('First matched')
-
     // If the best result matched fewer codes than our percentage threshold,
     // report no results
-    if (matches[0].score < fp.codes.length * MIN_MATCH_PERCENT)
-      log.error('best result matched fewer codes than our percentage threshold');
+    if(matches[0].score < fp.codes.length * MIN_MATCH_PERCENT){
+      log.debug('best result matched fewer codes than our percentage threshold');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
+    }
 
     // Compute more accurate scores for each track by taking time offsets into
     // account
@@ -187,26 +186,24 @@ function bestMatchForQuery(fp, threshold, callback) {
 
     log.debug('Actual top score is ' + newTopScore + ', next score is ' +
       matches[1].ascore);
-    log.debug('after actual');
 
     // If the best result actually matched fewer codes than our percentage
     // threshold, report no results
     if (newTopScore < fp.codes.length * MIN_MATCH_PERCENT)
-      log.error('matched fewer codes than our percentage');
+      log.debug('matched fewer codes than our percentage');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
     // If the actual score was not close enough, then no match
     if (newTopScore <= origTopScore / 2)
-      log.error('actual score was not close enough');
+      log.debug('actual score was not close enough');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
     // If the difference in actual scores between the first and second matches
     // is not significant enough, then no match
     if (newTopScore - matches[1].ascore < newTopScore / 2)
-      log.error('difference in actual scores between the first and second matches');
+      log.debug('difference in actual scores between the first and second matches');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
-    log.debug('end of code');
     // Fetch metadata for the top track
     getTrackMetadata(topMatch, matches,
       'MULTIPLE_GOOD_MATCH_HISTOGRAM_DECREASED', callback);
