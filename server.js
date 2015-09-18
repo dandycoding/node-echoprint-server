@@ -16,7 +16,7 @@ exports.init = init;
 exports.renderView = renderView;
 exports.respond = respond;
 
-var TIMEOUT = 1000 * 120;
+var TIMEOUT = 1000 * 1200;
 var POST_SIZE_LIMIT = 10 * 1024 * 1024; // 10 megabytes
 
 /**
@@ -59,10 +59,10 @@ function init() {
 
       req.on('end', function() {
         if (req.body.length === 0) {
-	        return respond(req, res, 422, { error: 'POST query must contain body' });
+          return respond(req, res, 422, { error: 'POST query must contain body' });
         }
 
-	      if (path[1] === 'ingest')
+        if (path[1] === 'ingest')
         {
           newrelic.setTransactionName('ingest');
           req.body = JSON.parse(req.body);

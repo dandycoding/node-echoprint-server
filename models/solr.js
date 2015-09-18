@@ -26,12 +26,14 @@ function fpQuery(fp, rows, callback) {
 
   // Get the top N matching tracks sorted by score (number of matched codes)
   var query = solrClient.createQuery().q({codes: fpCodesStr }).fl('*,score').start(0).rows(rows);
-
+ log.debug('solr query: '+JSON.stringify(query));
   solrClient.search(query, function(err, results){
+    log.debug('solr search done');
     if (err) return callback(err, null);
     if (!results || !results.response.numFound >= 1) return callback(null, []);
 
     var codeMatches = results.response.docs;
+    log.debug('codeMatches length '+ codeMatches.length);
     var matches = []
 
     for (var i = 0; i < codeMatches.length; i++) {
@@ -119,4 +121,3 @@ function updateArtist(artist, callback) {
 function disconnect(callback) {
   return callback();
 }
-

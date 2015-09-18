@@ -3,6 +3,7 @@
 node_modules/
 logs/*.log
 
+config.js
 config.local.js
 config.development.js
 config.staging.js
