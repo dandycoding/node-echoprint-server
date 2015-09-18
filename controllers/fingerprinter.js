@@ -203,6 +203,7 @@ function bestMatchForQuery(fp, threshold, callback) {
       log.debug('difference in actual scores between the first and second matches');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
+    log.debug('end of code');
     // Fetch metadata for the top track
     getTrackMetadata(topMatch, matches,
       'MULTIPLE_GOOD_MATCH_HISTOGRAM_DECREASED', callback);
