@@ -16,8 +16,7 @@ exports.debugQuery = function(req, res) {
   var json, code, codeVer;
   try {
     json = JSON.parse(req.body.json)[0];
-    // code = json.code;
-    code = json
+    code = json.code;
     // codeVer = json.metadata.version.toString();
     codeVer = "4.12"
   } catch (err) {
