@@ -130,7 +130,7 @@ function bestMatchForQuery(fp, threshold, callback) {
       return callback(null, { status: 'NO_RESULTS' });
     }
 
-    log.debug('Matched ' + matches.length + ' tracks, top code overlap is ' +
+    log.debug('Matched2 ' + matches.length + ' tracks, top code overlap is ' +
       matches[0].score);
 
     log.debug('First matched')
