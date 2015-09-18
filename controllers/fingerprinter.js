@@ -185,6 +185,7 @@ function bestMatchForQuery(fp, threshold, callback) {
 
     log.debug('Actual top score is ' + newTopScore + ', next score is ' +
       matches[1].ascore);
+    log.debug('after actual');
 
     // If the best result actually matched fewer codes than our percentage
     // threshold, report no results
