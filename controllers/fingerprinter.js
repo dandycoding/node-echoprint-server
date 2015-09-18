@@ -136,6 +136,7 @@ function bestMatchForQuery(fp, threshold, callback) {
     // If the best result matched fewer codes than our percentage threshold,
     // report no results
     if (matches[0].score < fp.codes.length * MIN_MATCH_PERCENT)
+      log.debug('best result matched fewer codes than our percentage threshold');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
     // Compute more accurate scores for each track by taking time offsets into
