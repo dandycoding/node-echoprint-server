@@ -15,9 +15,10 @@ exports.debugQuery = function(req, res) {
 
   var json, code, codeVer;
   try {
-    json = JSON.parse(req.body.json)[0];
-    log.warn('req.body.json '+ req.body.json);
-    log.warn('json '+ json);
+    // json = JSON.parse(req.body.json)[0];
+    json = JSON.parse(req.body.json)
+    // log.warn('req.body.json '+ req.body.json);
+    // log.warn('json '+ json);
     // code = json.code;
     code = json
     // codeVer = json.metadata.version.toString();
