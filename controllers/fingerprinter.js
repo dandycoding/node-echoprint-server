@@ -133,6 +133,8 @@ function bestMatchForQuery(fp, threshold, callback) {
     log.debug('Matched ' + matches.length + ' tracks, top code overlap is ' +
       matches[0].score);
 
+    log.debug('First matched')
+
     // If the best result matched fewer codes than our percentage threshold,
     // report no results
     if (matches[0].score < fp.codes.length * MIN_MATCH_PERCENT)
