@@ -26,7 +26,6 @@ function fpQuery(fp, rows, callback) {
 
   // Get the top N matching tracks sorted by score (number of matched codes)
   var query = solrClient.createQuery().q({codes: fpCodesStr }).fl('*,score').start(0).rows(rows);
- log.debug('solr query: '+JSON.stringify(query));
   solrClient.search(query, function(err, results){
     log.debug('solr search done');
     if (err) return callback(err, null);
