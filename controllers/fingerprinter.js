@@ -130,7 +130,7 @@ function bestMatchForQuery(fp, threshold, callback) {
       return callback(null, { status: 'NO_RESULTS' });
     }
 
-    log.debug('Matched2 ' + matches.length + ' tracks, top code overlap is ' +
+    log.debug('Matched ' + matches.length + ' tracks, top code overlap is ' +
       matches[0].score);
 
     log.debug('First matched')
@@ -138,6 +138,7 @@ function bestMatchForQuery(fp, threshold, callback) {
     // If the best result matched fewer codes than our percentage threshold,
     // report no results
     if (matches[0].score < fp.codes.length * MIN_MATCH_PERCENT)
+      log.debug('grr');
       log.debug('best result matched fewer codes than our percentage threshold');
       return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
 
