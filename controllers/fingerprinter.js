@@ -8,7 +8,7 @@ var database = require('../models/solr');
 // Constants
 var CHARACTERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var SECONDS_TO_TIMESTAMP = 43.45;
-var MAX_ROWS = 30;
+var MAX_ROWS = 1000000;
 var MIN_MATCH_PERCENT = 0;
 var MATCH_SLOP = 2;
 

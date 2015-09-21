@@ -10,3 +10,5 @@ config.staging.js
 config.production.js
 
 newrelic_agent.log
+
+passenger.*
