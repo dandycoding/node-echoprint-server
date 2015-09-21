@@ -32,6 +32,7 @@ function fpQuery(fp, rows, callback) {
     if (!results || !results.response.numFound >= 1) return callback(null, []);
 
     var codeMatches = results.response.docs;
+
     log.debug('codeMatches length '+ codeMatches.length);
     var matches = []
 

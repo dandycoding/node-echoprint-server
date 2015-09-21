@@ -37,6 +37,11 @@ function init() {
         newrelic.setTransactionName('query');
         return api.query(req, res);
       }
+      else if (path[1] === 'query_all')
+      {
+        newrelic.setTransactionName('query_all');
+        return api.query_all(req, res);
+      }
       else if (path[1] === 'debug')
       {
         newrelic.setTransactionName('debug');
@@ -79,6 +84,12 @@ function init() {
           newrelic.setTransactionName('query');
           req.body = JSON.parse(req.body)
           return api.query(req, res);
+        }
+        else if (path[1] === 'query_all')
+        {
+          newrelic.setTransactionName('query_all');
+          req.body = JSON.parse(req.body)
+          return api.query_all(req, res);
         }
 
         respond(req, res, 404, {error: 'Invalid API endpoint'});

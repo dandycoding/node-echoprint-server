@@ -48,6 +48,57 @@ exports.query = function(req, res) {
 };
 
 /**
+ * Querying for all matching tracks.
+ */
+exports.query_all = function(req, res) {
+  log.error('query_all ');
+  var url = urlParser.parse(req.url, true);
+  var code = url.query.code;
+  var codeVer = url.query.version;
+
+  if (!code && req.body)
+    code = req.body.code;
+  if (!code)
+    return server.respond(req, res, 500, { error: 'Missing code' });
+
+  if (!codeVer && req.body)
+    codeVer = req.body.version || req.body.metadata.version;
+  if (codeVer != config.codever)
+    return server.respond(req, res, 500, { error: 'Missing or invalid version' });
+
+  fingerprinter.decodeCodeString(code, function(err, fp) {
+    if (err) {
+      log.error('Failed to decode codes for query: ' + err);
+      return server.respond(req, res, 500, { error: 'Failed to decode codes for query: ' + err });
+    }
+
+    fp.codever = codeVer;
+
+    fingerprinter.bestMatchForQuery(fp, config.code_threshold, function(err, result, allMatches) {
+      if (err) {
+        log.warn('Failed to complete query: ' + err);
+        return server.respond(req, res, 500, { error: 'Failed to complete query: ' + err });
+      }
+
+      var duration = new Date() - req.start;
+      log.debug('Completed lookup in ' + duration + 'ms. success=' +
+        !!result.success + ', status=' + result.status);
+
+      for (var i = 0; i < allMatches.length; i++) {
+        delete allMatches[i]["codes"];
+        delete allMatches[i]["times"];
+        allMatches[i]["percentage_score"] = Math.round((100 / (allMatches[0]["score"] / allMatches[i]["score"]))*100)/100;
+      }
+
+      log.warn('result: ' + JSON.stringify(result));
+
+      return server.respond(req, res, 200, { success: !!result.success,
+        status: result.status, matches: allMatches });
+    });
+  });
+};
+
+/**
  * Adding a new track to the database.
  */
 exports.ingest = function(req, res) {

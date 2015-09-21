@@ -36,7 +36,7 @@ client.connect();
  */
 function fpQuery(fp, rows, callback) {
   var fpCodesStr = fp.codes.join(',');
-  
+
   // Get the top N matching tracks sorted by score (number of matched codes)
   var sql = 'SELECT track_id,COUNT(track_id) AS score ' +
     'FROM codes ' +
@@ -47,7 +47,7 @@ function fpQuery(fp, rows, callback) {
   client.query(sql, [], function(err, matches) {
     if (err) return callback(err, null);
     if (!matches || !matches.length) return callback(null, []);
-    
+
     var trackIDs = new Array(matches.length);
     var trackIDMap = {};
     for (var i = 0; i < matches.length; i++) {
@@ -56,7 +56,7 @@ function fpQuery(fp, rows, callback) {
       trackIDMap[trackID] = i;
     }
     var trackIDsStr = trackIDs.join('","');
-    
+
     // Get all of the matching codes and their offsets for the top N matching
     // tracks
     sql = 'SELECT code,time,track_id ' +
@@ -65,12 +65,12 @@ function fpQuery(fp, rows, callback) {
       'AND track_id IN ("' + trackIDsStr + '")';
     client.query(sql, [], function(err, codeMatches) {
       if (err) return callback(err, null);
-      
+
       for (var i = 0; i < codeMatches.length; i++) {
         var codeMatch = codeMatches[i];
         var idx = trackIDMap[codeMatch.track_id];
         if (idx === undefined) continue;
-        
+
         var match = matches[idx];
         if (!match.codes) {
           match.codes = [];
@@ -79,7 +79,7 @@ function fpQuery(fp, rows, callback) {
         match.codes.push(codeMatch.code);
         match.times.push(codeMatch.time);
       }
-      
+
       callback(null, matches);
     });
   });
@@ -143,7 +143,7 @@ function addTrack(artistID, fp, callback) {
   var length = fp.length;
   if (typeof length === 'string')
     length = parseInt(length, 10);
-  
+
   var sql = 'INSERT INTO tracks ' +
     '(name,artist_id,length,import_date,custom_id) ' +
     'VALUES (?,?,?,?,?)';
@@ -156,12 +156,12 @@ function addTrack(artistID, fp, callback) {
     log.debug('inserted ID: ' + info.insertId);
     var trackID = info.insertId;
     var tempName = temp.path({ prefix: 'echoprint-' + trackID, suffix: '.csv' });
-    
+
     // Write out the codes to a file for bulk insertion into MySQL
     log.debug('Writing ' + fp.codes.length + ' codes to temporary file ' + tempName);
     writeCodesToFile(tempName, fp, trackID, function(err) {
       if (err) return callback(err, null);
-      
+
       // Bulk insert the codes
       sql = 'LOAD DATA LOCAL INFILE ? IGNORE INTO TABLE codes';
       log.debug('Bulk insert codes from local file: ' + tempName);
@@ -190,12 +190,12 @@ function writeCodesToFile(filename, fp, trackID, callback) {
     if (i === fp.codes.length)
       file.end();
   };
-  
+
   var file = fs.createWriteStream(filename);
   file.on('drain', keepWriting);
   file.on('error', callback);
   file.on('close', callback);
-  
+
   keepWriting();
 }
 
