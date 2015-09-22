@@ -84,10 +84,12 @@ exports.query_all = function(req, res) {
       log.debug('Completed lookup in ' + duration + 'ms. success=' +
         !!result.success + ', status=' + result.status);
 
-      for (var i = 0; i < allMatches.length; i++) {
-        delete allMatches[i]["codes"];
-        delete allMatches[i]["times"];
-        allMatches[i]["percentage_score"] = Math.round((100 / (allMatches[0]["score"] / allMatches[i]["score"]))*100)/100;
+      if(allMatches != undefined){
+        for (var i = 0; i < allMatches.length; i++) {
+          delete allMatches[i]["codes"];
+          delete allMatches[i]["times"];
+          allMatches[i]["percentage_score"] = Math.round((100 / (allMatches[0]["score"] / allMatches[i]["score"]))*100)/100;
+        }
       }
 
       log.warn('result: ' + JSON.stringify(result));
