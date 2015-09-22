@@ -9,7 +9,7 @@ var database = require('../models/solr');
 var CHARACTERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 var SECONDS_TO_TIMESTAMP = 43.45;
 var MAX_ROWS = 20;
-var MIN_MATCH_PERCENT = 0;
+var MIN_MATCH_PERCENT = 0.15;
 var MATCH_SLOP = 2;
 
 // Exports
@@ -98,8 +98,6 @@ function cutFPLength(fp, maxSeconds) {
 
   for (var i = 0; i < fp.times.length; i++) {
     if (fp.times[i] > sixtySeconds) {
-      log.debug('Clamping ' + fp.codes.length + ' codes to ' + i + ' codes');
-
       newFP.codes = fp.codes.slice(0, i);
       newFP.times = fp.times.slice(0, i);
       return newFP;
@@ -195,17 +193,17 @@ function bestMatchForQuery(fp, threshold, callback) {
     }
 
     // If the actual score was not close enough, then no match
-    // if(newTopScore <= origTopScore / 2){
-    //   log.debug('actual score was not close enough');
-    //   return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    // }
+    if(newTopScore <= origTopScore / 2){
+      log.debug('actual score was not close enough');
+      return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
+    }
 
     // If the difference in actual scores between the first and second matches
     // is not significant enough, then no match
-    // if(newTopScore - matches[1].ascore < newTopScore / 2){
-    //   log.debug('difference in actual scores between the first and second matches');
-    //   return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    // }
+    if(newTopScore - matches[1].ascore < newTopScore / 2){
+      log.debug('difference in actual scores between the first and second matches');
+      return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
+    }
 
     // Fetch metadata for the top track
     getTrackMetadata(topMatch, matches,
@@ -349,92 +347,91 @@ function ingest(fp, callback) {
         return callback('Query failed: ' + err, null);
       }
 
-      // if (res.success) {
-      //   var match = res.match;
-      //   log.info('Found existing match with status ' + res.status +
-      //     ', track ' + match.track_id + ' ("' + match.track + '") by "' +
-      //     match.artist + '"');
+      if (res.success) {
+        var match = res.match;
+        log.info('Found existing match with status ' + res.status +
+          ', track ' + match.track_id + ' ("' + match.track + '") by "' +
+          match.artist + '"');
 
-      //   var checkUpdateArtist = function() {
-      //     if (!match.artist) {
-      //       // Existing artist is unnamed but we have a name now. Check if this
-      //       // artist name already exists in the database
-      //       log.debug('Updating track artist');
-      //       database.getArtistByName(fp.artist, function(err, artist) {
-      //         if (err) { gMutex.release(); return callback(err, null); }
+        var checkUpdateArtist = function() {
+          if (!match.artist) {
+            // Existing artist is unnamed but we have a name now. Check if this
+            // artist name already exists in the database
+            log.debug('Updating track artist');
+            database.getArtistByName(fp.artist, function(err, artist) {
+              if (err) { gMutex.release(); return callback(err, null); }
 
-      //         if (artist) {
-      //           log.debug('Setting track artist_id to ' + artist.artist_id);
+              if (artist) {
+                log.debug('Setting track artist_id to ' + artist.artist_id);
 
-      //           // Update the track to point to the existing artist
-      //           database.updateTrack(match.track_id, match.track,
-      //             artist.artist_id, function(err)
-      //           {
-      //             if (err) { gMutex.release(); return callback(err, null); }
-      //             match.artist_id = artist.artist_id;
-      //             match.artist = artist.name;
-      //             finished(match);
-      //           });
-      //         } else {
-      //           finished(match);
-      //         }
-      //       });
-      //     } else {
-      //       if (match.artist != fp.artist) {
-      //         log.warn('New artist name "' + fp.artist + '" does not match ' +
-      //           'existing artist name "' + match.artist + '" for track ' +
-      //           match.track_id);
-      //       }
-      //       log.debug('Skipping artist update');
-      //       finished(match);
-      //     }
-      //   };
+                // Update the track to point to the existing artist
+                database.updateTrack(match.track_id, match.track,
+                  artist.artist_id, function(err)
+                {
+                  if (err) { gMutex.release(); return callback(err, null); }
+                  match.artist_id = artist.artist_id;
+                  match.artist = artist.name;
+                  finished(match);
+                });
+              } else {
+                finished(match);
+              }
+            });
+          } else {
+            if (match.artist != fp.artist) {
+              log.warn('New artist name "' + fp.artist + '" does not match ' +
+                'existing artist name "' + match.artist + '" for track ' +
+                match.track_id);
+            }
+            log.debug('Skipping artist update');
+            finished(match);
+          }
+        };
 
-      //   var finished = function(match) {
-      //     // Success
-      //     log.info('Track update complete');
-      //     gMutex.release();
-      //     callback(null, { track_id: match.track_id, track: match.track,
-      //       artist_id: match.artist_id, artist: match.artist, custom_id: match.custom_id });
-      //   };
+        var finished = function(match) {
+          // Success
+          log.info('Track update complete');
+          gMutex.release();
+          callback(null, { track_id: match.track_id, track: match.track,
+            artist_id: match.artist_id, artist: match.artist, custom_id: match.custom_id });
+        };
 
-      //   if (!match.track && fp.track) {
-      //     // Existing track is unnamed but we have a name now. Update the track
-      //     log.debug('Updating track name to "' + fp.track + '"');
-      //     database.updateTrack(match.track_id, fp.track, match.artist_id,
-      //       function(err)
-      //     {
-      //       if (err) { gMutex.release(); return callback(err, null); }
-      //       match.track = fp.track;
-      //       checkUpdateArtist();
-      //     });
-      //   } else {
-      //     log.debug('Skipping track name update');
-      //     checkUpdateArtist();
-      //   }
-      // } else {
+        if (!match.track && fp.track) {
+          // Existing track is unnamed but we have a name now. Update the track
+          log.debug('Updating track name to "' + fp.track + '"');
+          database.updateTrack(match.track_id, fp.track, match.artist_id,
+            function(err)
+          {
+            if (err) { gMutex.release(); return callback(err, null); }
+            match.track = fp.track;
+            checkUpdateArtist();
+          });
+        } else {
+          log.debug('Skipping track name update');
+          checkUpdateArtist();
+        }
+      } else {
         // Track does not exist in the database yet
 
+        log.debug('Track does not exist in the database yet, status ' +
+          res.status);
 
-      log.debug('Track does not exist in the database yet, status ' +
-        res.status);
+        // Check if we were given an artist name
+        if (fp.artist) {
+          // Does this artist already exist in the database?
+          database.getArtistByName(fp.artist, function(err, artist) {
+            if (err) { gMutex.release(); return callback(err, null); }
 
-      // Check if we were given an artist name
-      if (fp.artist) {
-        // Does this artist already exist in the database?
-        database.getArtistByName(fp.artist, function(err, artist) {
-          if (err) { gMutex.release(); return callback(err, null); }
+            if (!artist)
+              createArtistAndTrack();
+            else
+              createTrack(artist.artist_id, artist.name);
+          });
+        } else {
+          createTrack(null,null);
+        }
 
-          if (!artist)
-            createArtistAndTrack();
-          else
-            createTrack(artist.artist_id, artist.name);
-        });
-      } else {
-        createTrack(null,null);
       }
-
-      // }
 
       // Function for creating a new artist and new track
       function createArtistAndTrack() {
