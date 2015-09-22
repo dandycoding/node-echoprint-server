@@ -200,10 +200,10 @@ function bestMatchForQuery(fp, threshold, callback) {
 
     // If the difference in actual scores between the first and second matches
     // is not significant enough, then no match
-    if(newTopScore - matches[1].ascore < newTopScore / 2){
-      log.debug('difference in actual scores between the first and second matches');
-      return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
-    }
+    // if(newTopScore - matches[1].ascore < newTopScore / 2){
+    //   log.debug('difference in actual scores between the first and second matches');
+    //   return callback(null, { status: 'MULTIPLE_BAD_HISTOGRAM_MATCH' });
+    // }
 
     // Fetch metadata for the top track
     getTrackMetadata(topMatch, matches,
